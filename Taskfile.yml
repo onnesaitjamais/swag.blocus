@@ -1,0 +1,30 @@
+### https://taskfile.dev
+###---------------------
+
+version: '2'
+
+vars:
+  VERSION: 0.0.0
+  SERVICE: swag.blocus
+  BUILTAT:
+    sh: date +%s
+  LDFLAGS: -X 'main.version={{.VERSION}}' -X 'main.builtAt={{.BUILTAT}}'
+
+tasks:
+  lint:
+    cmds:
+      - golangci-lint run
+
+  test:
+    cmds:
+      - go test -cover -v ./...
+
+  build:
+    cmds:
+      - go build -ldflags "{{.LDFLAGS}}" -o $GOPATH/bin/{{.SERVICE}} main.go
+
+  default:
+    cmds:
+      - task: lint
+      - task: test
+      - task: build
