@@ -24,6 +24,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var _endpoints = make(map[string]string)
+
 func errorHandler(s *service.Service) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		s.Logger().Error( //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -38,11 +40,10 @@ func errorHandler(s *service.Service) func(http.ResponseWriter, *http.Request, e
 }
 
 func simpleFilter(s *service.Service) func(*registry.Service) bool {
-	interval := s.Registry().Interval()
 	now := time.Now()
 
-	return func(s *registry.Service) bool {
-		return s.Status == "running" && now.Sub(s.Heartbeat) <= time.Duration(interval)*time.Second
+	return func(service *registry.Service) bool {
+		return service.Status == "running" && now.Sub(service.Heartbeat) <= s.Registry().Interval()
 	}
 }
 
@@ -63,11 +64,26 @@ func findEndpoint(s *service.Service, name string) (string, int, error) {
 
 	services.Shuffle()
 
-	service := services[0]
-	host := service.FQDN
-	port := service.Port
+	previous := _endpoints[name]
+	endpoint := services[0]
+	fqdn := s.FQDN()
 
-	if host == s.FQDN() {
+	for _, service := range services {
+		if service.FQDN == fqdn {
+			endpoint = service
+
+			if service.ID != previous {
+				break
+			}
+		}
+	}
+
+	_endpoints[name] = endpoint.ID
+
+	host := endpoint.FQDN
+	port := endpoint.Port
+
+	if host == fqdn {
 		host = ""
 	}
 

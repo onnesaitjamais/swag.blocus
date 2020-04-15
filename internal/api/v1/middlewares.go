@@ -41,7 +41,7 @@ func loggingMiddleware(s *service.Service) mux.MiddlewareFunc {
 			s.Logger().Trace( //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 				"Request",
 				"id", id,
-				"duration", time.Since(startTime).String(),
+				"elapsed", time.Since(startTime).String(),
 			)
 		})
 	}
