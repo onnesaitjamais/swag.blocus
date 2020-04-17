@@ -17,17 +17,15 @@ import (
 	"github.com/arnumina/swag/util/options"
 	"github.com/gorilla/mux"
 
-	v0 "github.com/arnumina/swag.blocus/internal/api/v0"
+	"github.com/arnumina/swag.blocus/internal/api/systemd"
 	v1 "github.com/arnumina/swag.blocus/internal/api/v1"
 )
 
 const _port = 65534
 
-func initialize(r *mux.Router, s *service.Service) error {
-	v0.Routes(r.PathPrefix("/api/v0").Subrouter())
+func initialize(r *mux.Router, s *service.Service) {
+	systemd.Routes(r.PathPrefix("/api/systemd").Subrouter())
 	v1.Routes(r.PathPrefix("/api/v1").Subrouter(), s)
-
-	return nil
 }
 
 // Run AFAIRE
@@ -48,7 +46,7 @@ func Run(version, builtAt string) error {
 			"http",
 			options.Options{
 				"handler":    router,
-				"health_URI": "/api/v0/health",
+				"health_URI": "/api/systemd/health",
 				"local":      false,
 			},
 		),
@@ -59,16 +57,7 @@ func Run(version, builtAt string) error {
 
 	defer service.Close()
 
-	if err := initialize(router, service); err != nil {
-		service.Logger().Critical( //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-			"Error when initializing this service",
-			"name", service.Name(),
-			"version", version,
-			"reason", err.Error(),
-		)
-
-		return err
-	}
+	initialize(router, service)
 
 	if err := service.Run(); err != nil {
 		return err
