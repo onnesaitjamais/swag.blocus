@@ -15,13 +15,12 @@ import (
 	"github.com/arnumina/swag"
 	"github.com/arnumina/swag/service"
 	"github.com/arnumina/swag/util/options"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
 	"github.com/arnumina/swag.blocus/internal/api/systemd"
 	v1 "github.com/arnumina/swag.blocus/internal/api/v1"
 )
-
-const _port = 65534
 
 func initialize(r *mux.Router, s *service.Service) {
 	systemd.Routes(r.PathPrefix("/api/systemd").Subrouter())
@@ -36,16 +35,10 @@ func Run(version, builtAt string) error {
 		"blocus",
 		version,
 		builtAt,
-		swag.Config(
-			"default",
-			options.Options{
-				"port": _port,
-			},
-		),
 		swag.Server(
 			"http",
 			options.Options{
-				"handler":    router,
+				"handler":    handlers.CORS(handlers.AllowedOrigins([]string{"*"}))(router),
 				"health_URI": "/api/systemd/health",
 				"local":      false,
 			},

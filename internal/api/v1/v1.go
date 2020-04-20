@@ -39,11 +39,12 @@ func errorHandler(s *service.Service) func(http.ResponseWriter, *http.Request, e
 	}
 }
 
-func simpleFilter(s *service.Service) func(*registry.Service) bool {
+func simpleFilter() func(*registry.Service) bool {
 	now := time.Now()
 
 	return func(service *registry.Service) bool {
-		return service.Status == "running" && now.Sub(service.Heartbeat) <= s.Registry().Interval()
+		interval := time.Duration(service.Interval) * time.Second
+		return service.Status == "running" && now.Sub(service.Heartbeat) <= interval
 	}
 }
 
@@ -53,7 +54,7 @@ func findEndpoint(s *service.Service, name string) (string, int, error) {
 		return "", 0, err
 	}
 
-	services = services.Filter(simpleFilter(s))
+	services = services.Filter(simpleFilter())
 
 	if services.Len() == 0 {
 		return "", 0,
